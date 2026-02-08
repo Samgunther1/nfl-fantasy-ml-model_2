@@ -15,7 +15,7 @@ df =df.to_pandas()
 print("Data shape:", df.shape)
 
 # Define output path relative to repo root
-output_path = Path("data/processed/nfl_weekly_2024.csv")
+output_path = Path("data/processed/nfl_weekly_2020_2025.csv")
 
 # Ensure directory exists
 output_path.parent.mkdir(parents=True, exist_ok=True)
