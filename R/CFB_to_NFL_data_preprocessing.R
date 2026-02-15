@@ -5,8 +5,8 @@ library(stringr)
 
 
 # Clean cfb data
-cfb_stats <- read.csv('data/raw/cfb_player_stats_2020_2025.csv')
-nfl_stats <- read.csv('data/raw/nfl_player_stats_2020_2025.csv')
+cfb_stats <- read.csv('data/raw/cfb_player_stats_2016_2024.csv')
+nfl_stats <- read.csv('data/raw/nfl_player_stats_2017_2025.csv')
 
 #Split data by position
 cfb_qb_df  <- cfb_stats %>% filter(position == "QB")
