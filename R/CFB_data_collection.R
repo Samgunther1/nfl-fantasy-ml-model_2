@@ -1,3 +1,9 @@
+
+library(dplyr)
+library(tidyr)
+library(arrow)
+library(cfbfastR)
+
 # Years and weeks
 years <- 2020:2025
 weeks <- 1:14
