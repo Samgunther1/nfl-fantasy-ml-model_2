@@ -122,6 +122,16 @@ qb_season <- qb_last %>%
     position = first(position.x),
     games = n_distinct(week),
     
+    # 🔹 KEEP DRAFT / MEASUREMENTS FIELDS
+    overall = first(overall),
+    round = first(round),
+    pick = first(pick),
+    height = first(height),
+    weight = first(weight),
+    pre_draft_ranking = first(pre_draft_ranking),
+    pre_draft_position_ranking = first(pre_draft_position_ranking),
+    pre_draft_grade = first(pre_draft_grade),
+    
     fumbles_rec  = sum(fumbles_rec,  na.rm = TRUE),
     fumbles_lost = sum(fumbles_lost, na.rm = TRUE),
     fumbles_fum  = sum(fumbles_fum,  na.rm = TRUE),
@@ -145,11 +155,11 @@ qb_season <- qb_last %>%
     rushing_avg = ifelse(rushing_car > 0, rushing_yds / rushing_car, NA_real_),
     passing_qbr = mean(passing_qbr, na.rm = TRUE),
     
-    # optional: keep a representative athlete_id for traceability
     athlete_id = first(college_athlete_id),
     
     .groups = "drop"
   )
+
 
 safe_max <- function(x) {
   if (all(is.na(x))) NA_real_ else max(x, na.rm = TRUE)
@@ -160,6 +170,16 @@ skill_season_totals <- function(df) {
     group_by(player_key) %>%
     summarise(
       games = n_distinct(week),
+      
+      # 🔹 KEEP DRAFT / MEASUREMENTS FIELDS
+      overall = first(overall),
+      round = first(round),
+      pick = first(pick),
+      height = first(height),
+      weight = first(weight),
+      pre_draft_ranking = first(pre_draft_ranking),
+      pre_draft_position_ranking = first(pre_draft_position_ranking),
+      pre_draft_grade = first(pre_draft_grade),
       
       # Totals
       fumbles_rec  = sum(fumbles_rec,  na.rm = TRUE),
