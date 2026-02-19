@@ -6,7 +6,7 @@ library(cfbfastR)
 library(nflreadr)
 
 # Years and weeks
-years <- 2016:2024
+years <- 2010:2024
 weeks <- 1:14
 
 all_data <- list()
@@ -19,7 +19,7 @@ for (year in years) {
     
     tmp <- cfbd_game_player_stats(year = year, week = week)
     
-    # Add year and week columns (VERY IMPORTANT)
+    # Add year and week columns 
     tmp$season <- year
     tmp$week <- week
     
@@ -54,13 +54,40 @@ pos_lookup <- player_details %>%
   filter(!is.na(position), position != "") %>%
   distinct(athlete_id, season, position) %>%
   group_by(athlete_id, season) %>%
-  slice(1) %>%     # pick one if multiple positions exist
+  slice(1) %>%     
   ungroup()
 
 pos_lookup %>% count(athlete_id, season) %>% filter(n > 1)
 
 player_all <- player_stats %>%
   left_join(pos_lookup, by = c("athlete_id" = "athlete_id", "season" = "season"))
+
+player_all <- rename(player_all, college_athlete_id = athlete_id)
+
+all_data <- list()
+index <- 1
+
+for (year in years) {
+  
+    
+    cat("Pulling:", year, "\n")
+    
+    tmp <- cfbd_draft_picks(year = year)
+    
+    # Add year and week columns 
+    tmp$season <- year
+    
+    all_data[[index]] <- tmp
+    index <- index + 1
+  
+}
+
+player_draft <- bind_rows(all_data)
+player_draft <- player_draft %>% 
+  mutate(college_athlete_id = as.integer(college_athlete_id))
+
+player_all <- player_all %>%
+  left_join(player_draft, by = ("college_athlete_id" = "college_athlete_id"))
 
 start_year <- min(years)
 end_year <- max(years)

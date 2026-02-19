@@ -5,14 +5,14 @@ library(stringr)
 
 
 # Clean cfb data
-cfb_stats <- read.csv('data/raw/cfb_player_stats_2016_2024.csv')
-nfl_stats <- read.csv('data/raw/nfl_player_stats_2017_2025.csv')
+cfb_stats <- read.csv('data/raw/cfb_player_stats_2010_2024.csv')
+nfl_stats <- read.csv('data/raw/nfl_player_stats_2011_2025.csv')
 
 #Split data by position
-cfb_qb_df  <- cfb_stats %>% filter(position == "QB")
-cfb_rb_df  <- cfb_stats %>% filter(position == "RB")
-cfb_wr_df  <- cfb_stats %>% filter(position == "WR")
-cfb_te_df  <- cfb_stats %>% filter(position == "TE")
+cfb_qb_df  <- cfb_stats %>% filter(position.x == "QB")
+cfb_rb_df  <- cfb_stats %>% filter(position.x == "RB")
+cfb_wr_df  <- cfb_stats %>% filter(position.x == "WR")
+cfb_te_df  <- cfb_stats %>% filter(position.x == "TE")
 
 #create player key
 make_name_key <- function(x) {
@@ -93,22 +93,22 @@ cfb_te_df <- cfb_te_df %>%
 #filter to max season
 qb_last <-cfb_qb_df %>%
   group_by(player_key) %>%
-  filter(season == max(season, na.rm = TRUE)) %>%
+  filter(season.x == max(season.x, na.rm = TRUE)) %>%
   ungroup()
 
 rb_last <-cfb_rb_df %>%
   group_by(player_key) %>%
-  filter(season == max(season, na.rm = TRUE)) %>%
+  filter(season.x == max(season.x, na.rm = TRUE)) %>%
   ungroup()
 
 wr_last <-cfb_wr_df %>%
   group_by(player_key) %>%
-  filter(season == max(season, na.rm = TRUE)) %>%
+  filter(season.x == max(season.x, na.rm = TRUE)) %>%
   ungroup()
 
 te_last <-cfb_te_df %>%
   group_by(player_key) %>%
-  filter(season == max(season, na.rm = TRUE)) %>%
+  filter(season.x == max(season.x, na.rm = TRUE)) %>%
   ungroup()
 
 #aggregate stats
@@ -118,8 +118,8 @@ qb_season <- qb_last %>%
   group_by(player_key) %>%
   summarise(
     athlete_name = first(athlete_name),
-    season = max(season, na.rm = TRUE),
-    position = first(position),
+    season = max(season.x, na.rm = TRUE),
+    position = first(position.x),
     games = n_distinct(week),
     
     fumbles_rec  = sum(fumbles_rec,  na.rm = TRUE),
@@ -146,7 +146,7 @@ qb_season <- qb_last %>%
     passing_qbr = mean(passing_qbr, na.rm = TRUE),
     
     # optional: keep a representative athlete_id for traceability
-    athlete_id = first(athlete_id),
+    athlete_id = first(college_athlete_id),
     
     .groups = "drop"
   )
@@ -267,6 +267,18 @@ assert_unique_key <- function(df, key_col, df_name) {
     stop(paste("Duplicate player_key values detected in", df_name))
   }
 }
+
+
+#remove handful of players where key does not work
+nfl_wr_weekly_avg <- nfl_wr_weekly_avg %>%
+  add_count(player_key) %>%
+  filter(n == 1) %>%
+  select(-n)
+nfl_te_weekly_avg <- nfl_te_weekly_avg %>%
+  add_count(player_key) %>%
+  filter(n == 1) %>%
+  select(-n)
+
 assert_unique_key(nfl_qb_weekly_avg, player_key, "nfl_qb_weekly_avg")
 assert_unique_key(nfl_rb_weekly_avg, player_key, "nfl_rb_weekly_avg")
 assert_unique_key(nfl_wr_weekly_avg, player_key, "nfl_wr_weekly_avg")
