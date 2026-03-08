@@ -6,7 +6,7 @@ library(cfbfastR)
 library(nflreadr)
 
 # Years and weeks
-years <- 2010:2024
+years <- 2010:2025
 weeks <- 1:14
 
 all_data <- list()

@@ -5,7 +5,7 @@ library(stringr)
 
 
 # Clean cfb data
-cfb_stats <- read.csv('data/raw/cfb_player_stats_2010_2024.csv')
+cfb_stats <- read.csv('data/raw/cfb_player_stats_2010_2025.csv')
 nfl_stats <- read.csv('data/raw/nfl_player_stats_2011_2025.csv')
 
 #Split data by position
@@ -132,27 +132,27 @@ qb_season <- qb_last %>%
     pre_draft_position_ranking = first(pre_draft_position_ranking),
     pre_draft_grade = first(pre_draft_grade),
     
-    fumbles_rec  = sum(fumbles_rec,  na.rm = TRUE),
-    fumbles_lost = sum(fumbles_lost, na.rm = TRUE),
-    fumbles_fum  = sum(fumbles_fum,  na.rm = TRUE),
+    fumbles_rec_pg  = mean(fumbles_rec,  na.rm = TRUE),
+    fumbles_lost_pg = mean(fumbles_lost, na.rm = TRUE),
+    fumbles_fum_pg  = mean(fumbles_fum,  na.rm = TRUE),
     
-    interceptions_td  = sum(interceptions_td,  na.rm = TRUE),
-    interceptions_yds = sum(interceptions_yds, na.rm = TRUE),
-    interceptions_int = sum(interceptions_int, na.rm = TRUE),
+    interceptions_td_pg  = mean(interceptions_td,  na.rm = TRUE),
+    interceptions_yds_pg = mean(interceptions_yds, na.rm = TRUE),
+    interceptions_int_pg = mean(interceptions_int, na.rm = TRUE),
     
     rushing_long = safe_max(rushing_long),
-    rushing_td   = sum(rushing_td,   na.rm = TRUE),
-    rushing_yds  = sum(rushing_yds,  na.rm = TRUE),
-    rushing_car  = sum(rushing_car,  na.rm = TRUE),
+    rushing_td_pg   = mean(rushing_td,   na.rm = TRUE),
+    rushing_yds_pg  = mean(rushing_yds,  na.rm = TRUE),
+    rushing_car_pg  = mean(rushing_car,  na.rm = TRUE),
     
-    passing_int         = sum(passing_int,         na.rm = TRUE),
-    passing_td          = sum(passing_td,          na.rm = TRUE),
-    passing_yds         = sum(passing_yds,         na.rm = TRUE),
-    passing_completions = sum(passing_completions, na.rm = TRUE),
-    passing_attempts    = sum(passing_attempts,    na.rm = TRUE),
+    passing_int_pg         = mean(passing_int,         na.rm = TRUE),
+    passing_td_pg          = mean(passing_td,          na.rm = TRUE),
+    passing_yds_pg         = mean(passing_yds,         na.rm = TRUE),
+    passing_completions_pg = mean(passing_completions, na.rm = TRUE),
+    passing_attempts_pg    = mean(passing_attempts,    na.rm = TRUE),
     
-    passing_avg = ifelse(passing_attempts > 0, passing_yds / passing_attempts, NA_real_),
-    rushing_avg = ifelse(rushing_car > 0, rushing_yds / rushing_car, NA_real_),
+    passing_avg = ifelse(mean(passing_attempts, na.rm = TRUE) > 0, mean(passing_yds, na.rm = TRUE) / mean(passing_attempts, na.rm = TRUE), NA_real_),
+    rushing_avg = ifelse(mean(rushing_car, na.rm = TRUE) > 0, mean(rushing_yds, na.rm = TRUE) / mean(rushing_car, na.rm = TRUE), NA_real_),
     passing_qbr = mean(passing_qbr, na.rm = TRUE),
     
     athlete_id = first(college_athlete_id),
@@ -169,6 +169,9 @@ skill_season_totals <- function(df) {
   df %>%
     group_by(player_key) %>%
     summarise(
+      athlete_name = first(athlete_name),
+      season = max(season.x, na.rm = TRUE),
+      position = first(position.x),
       games = n_distinct(week),
       
       # 🔹 KEEP DRAFT / MEASUREMENTS FIELDS
@@ -181,30 +184,30 @@ skill_season_totals <- function(df) {
       pre_draft_position_ranking = first(pre_draft_position_ranking),
       pre_draft_grade = first(pre_draft_grade),
       
-      # Totals
-      fumbles_rec  = sum(fumbles_rec,  na.rm = TRUE),
-      fumbles_lost = sum(fumbles_lost, na.rm = TRUE),
-      fumbles_fum  = sum(fumbles_fum,  na.rm = TRUE),
+      # Per-game averages
+      fumbles_rec_pg  = mean(fumbles_rec,  na.rm = TRUE),
+      fumbles_lost_pg = mean(fumbles_lost, na.rm = TRUE),
+      fumbles_fum_pg  = mean(fumbles_fum,  na.rm = TRUE),
       
-      interceptions_td  = sum(interceptions_td,  na.rm = TRUE),
-      interceptions_yds = sum(interceptions_yds, na.rm = TRUE),
-      interceptions_int = sum(interceptions_int, na.rm = TRUE),
+      interceptions_td_pg  = mean(interceptions_td,  na.rm = TRUE),
+      interceptions_yds_pg = mean(interceptions_yds, na.rm = TRUE),
+      interceptions_int_pg = mean(interceptions_int, na.rm = TRUE),
       
-      receiving_td  = sum(receiving_td,  na.rm = TRUE),
-      receiving_yds = sum(receiving_yds, na.rm = TRUE),
-      receiving_rec = sum(receiving_rec, na.rm = TRUE),
+      receiving_td_pg  = mean(receiving_td,  na.rm = TRUE),
+      receiving_yds_pg = mean(receiving_yds, na.rm = TRUE),
+      receiving_rec_pg = mean(receiving_rec, na.rm = TRUE),
       
-      rushing_td  = sum(rushing_td,  na.rm = TRUE),
-      rushing_yds = sum(rushing_yds, na.rm = TRUE),
-      rushing_car = sum(rushing_car, na.rm = TRUE),
+      rushing_td_pg  = mean(rushing_td,  na.rm = TRUE),
+      rushing_yds_pg = mean(rushing_yds, na.rm = TRUE),
+      rushing_car_pg = mean(rushing_car, na.rm = TRUE),
       
       # Longs (safe max)
       receiving_long = safe_max(receiving_long),
       rushing_long   = safe_max(rushing_long),
       
       # Recomputed season-level rates
-      receiving_avg = ifelse(receiving_rec > 0, receiving_yds / receiving_rec, NA_real_),
-      rushing_avg   = ifelse(rushing_car > 0, rushing_yds / rushing_car, NA_real_),
+      receiving_avg = ifelse(mean(receiving_rec, na.rm = TRUE) > 0, mean(receiving_yds, na.rm = TRUE) / mean(receiving_rec, na.rm = TRUE), NA_real_),
+      rushing_avg   = ifelse(mean(rushing_car, na.rm = TRUE) > 0, mean(rushing_yds, na.rm = TRUE) / mean(rushing_car, na.rm = TRUE), NA_real_),
       
       .groups = "drop"
     )
@@ -320,28 +323,35 @@ qb_joined <- qb_season %>%
     by = "player_key"
   )
 
-#remove players who did not actually play in nfl
-qb_model <- qb_joined %>%
-  filter(!is.na(avg_weekly_ppr))
-
 rb_joined <- rb_season %>% left_join(nfl_rb_weekly_avg %>% select(player_key, nfl_player_id = player_id, nfl_name = player_display_name, nfl_rookie_season = season, avg_weekly_ppr, n_weeks), by="player_key")
 wr_joined <- wr_season %>% left_join(nfl_wr_weekly_avg %>% select(player_key, nfl_player_id = player_id, nfl_name = player_display_name, nfl_rookie_season = season, avg_weekly_ppr, n_weeks), by="player_key")
 te_joined <- te_season %>% left_join(nfl_te_weekly_avg %>% select(player_key, nfl_player_id = player_id, nfl_name = player_display_name, nfl_rookie_season = season, avg_weekly_ppr, n_weeks), by="player_key")
 
-rb_model <- rb_joined %>%
-  filter(!is.na(avg_weekly_ppr))
+# Training set: players who have already played in the NFL (avg_weekly_ppr is known)
+qb_model <- qb_joined %>% filter(!is.na(avg_weekly_ppr))
+rb_model <- rb_joined %>% filter(!is.na(avg_weekly_ppr))
+wr_model <- wr_joined %>% filter(!is.na(avg_weekly_ppr))
+te_model <- te_joined %>% filter(!is.na(avg_weekly_ppr))
 
-wr_model <- wr_joined %>%
-  filter(!is.na(avg_weekly_ppr))
+# Predict set: 2025 draft class players with no NFL history yet
+# These will be scored by the CFB model to generate cfb_projected_ppr,
+# then included in the NFL model's 2026 prediction files
+qb_predict <- qb_joined %>% filter(is.na(avg_weekly_ppr), season == max(season, na.rm = TRUE))
+rb_predict <- rb_joined %>% filter(is.na(avg_weekly_ppr), season == max(season, na.rm = TRUE))
+wr_predict <- wr_joined %>% filter(is.na(avg_weekly_ppr), season == max(season, na.rm = TRUE))
+te_predict <- te_joined %>% filter(is.na(avg_weekly_ppr), season == max(season, na.rm = TRUE))
 
-te_model <- te_joined %>%
-  filter(!is.na(avg_weekly_ppr))
-
-
+# Training sets (used to train CFB -> NFL model)
 write.csv(qb_model, "data/processed/cfb_to_nfl_qb_modeling.csv", row.names = FALSE)
-write.csv(rb_model, "data/processed/cfb_to_nfl_rb_modeling.csv", row.names = FALSE)     
-write.csv(wr_model, "data/processed/cfb_to_nfl_wr_modeling.csv", row.names = FALSE)     
-write.csv(te_model, "data/processed/cfb_to_nfl_te_modeling.csv", row.names = FALSE)     
+write.csv(rb_model, "data/processed/cfb_to_nfl_rb_modeling.csv", row.names = FALSE)
+write.csv(wr_model, "data/processed/cfb_to_nfl_wr_modeling.csv", row.names = FALSE)
+write.csv(te_model, "data/processed/cfb_to_nfl_te_modeling.csv", row.names = FALSE)
+
+# Predict sets (2025 draft class — scored by CFB model, fed into NFL 2026 predictions)
+write.csv(qb_predict, "data/processed/cfb_to_nfl_qb_predict_2026.csv", row.names = FALSE)
+write.csv(rb_predict, "data/processed/cfb_to_nfl_rb_predict_2026.csv", row.names = FALSE)
+write.csv(wr_predict, "data/processed/cfb_to_nfl_wr_predict_2026.csv", row.names = FALSE)
+write.csv(te_predict, "data/processed/cfb_to_nfl_te_predict_2026.csv", row.names = FALSE)     
 
 
 
