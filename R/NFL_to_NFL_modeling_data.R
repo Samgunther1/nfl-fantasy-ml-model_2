@@ -217,6 +217,10 @@ rb_train_df <- rb_model_df %>% filter(!is.na(target_fp_ppr))
 wr_train_df <- wr_model_df %>% filter(!is.na(target_fp_ppr))
 te_train_df <- te_model_df %>% filter(!is.na(target_fp_ppr))
 
+write.csv(rb_train_df, "data/processed/nfl_to_nfl_rb_train.csv", row.names = FALSE)
+write.csv(wr_train_df, "data/processed/nfl_to_nfl_wr_train.csv", row.names = FALSE)
+write.csv(te_train_df, "data/processed/nfl_to_nfl_te_train.csv", row.names = FALSE)
+
 # sanity
 bind_rows(
   rb_train_df %>% summarise(pos="RB", rows=n(), feature_min=min(season), feature_max=max(season), target_min=min(target_season), target_max=max(target_season)),
@@ -262,3 +266,37 @@ write.csv(qb_predict_2026_df, "data/processed/nfl_to_nfl_qb_predict_2026.csv", r
 write.csv(rb_predict_2026_df, "data/processed/nfl_to_nfl_rb_predict_2026.csv", row.names = FALSE)
 write.csv(wr_predict_2026_df, "data/processed/nfl_to_nfl_wr_predict_2026.csv", row.names = FALSE)
 write.csv(te_predict_2026_df, "data/processed/nfl_to_nfl_te_predict_2026.csv", row.names = FALSE)
+
+
+
+# ── Load combined CFB projections ─────────────────────────────────────────────
+cfb_proj <- read.csv("data/processed/cfb_to_nfl_all_projections.csv") %>%
+  select(player_id = nfl_player_id, cfb_projected_ppr) %>%
+  filter(!is.na(player_id)) %>%
+  distinct(player_id, .keep_all = TRUE)  # one projection per player
+
+cat("CFB projections loaded:", nrow(cfb_proj), "players\n\n")
+
+# ── Join into each position training file ────────────────────────────────────
+for (pos in c("qb", "rb", "wr", "te")) {
+  path <- paste0("data/processed/nfl_to_nfl_", pos, "_train.csv")
+  df   <- read.csv(path)
+  
+  # Drop any existing cfb_projected_ppr columns (including .x/.y from previous runs)
+  df <- df %>%
+    select(-any_of(c("cfb_projected_ppr", "cfb_projected_ppr.x", "cfb_projected_ppr.y")))
+  
+  df <- df %>%
+    left_join(cfb_proj, by = "player_id")
+  
+  coverage <- sum(!is.na(df$cfb_projected_ppr))
+  total    <- nrow(df)
+  
+  cat(toupper(pos), "—", total, "rows,", coverage, "with cfb_projected_ppr",
+      paste0("(", round(coverage / total * 100, 1), "%)\n"))
+  
+  write.csv(df, path, row.names = FALSE)
+}
+
+cat("\nDone. Training files updated.\n")
+
