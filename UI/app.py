@@ -1,30 +1,25 @@
 import pandas as pd
-import numpy as np
 import streamlit as st
-from pathlib import Path
 
-PRED_PATH = "data/processed/nfl_to_nfl_all_predictions_2026_named.csv"
+PRED_PATH = "..data/processed/all_predictions_2026.csv"
 SCORE_COL = "pred_fp_ppr_2026"
 VALID_POS = ["QB", "RB", "WR", "TE"]
 
-st.set_page_config(page_title="Draft Pick Assistant", layout="centered")
+st.set_page_config(page_title="Fantasy Draft Assistant", layout="centered")
 
 @st.cache_data
 def load_preds(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
-    needed = ["player_id", "position", SCORE_COL]
+    needed = ["player_id", "player_display_name", "position", SCORE_COL, "college_flag"]
     for c in needed:
         if c not in df.columns:
             raise ValueError(f"Missing required column: {c}")
 
-    if "player_name" not in df.columns:
-        df["player_name"] = ""
-
-    df = df[["player_id", "player_name", "position", SCORE_COL]].copy()
+    df = df[needed].copy()
     df[SCORE_COL] = pd.to_numeric(df[SCORE_COL], errors="coerce")
     df = df.dropna(subset=[SCORE_COL])
     df["position"] = df["position"].astype(str).str.upper()
-
+    df["player_display_name"] = df["player_display_name"].fillna("Unknown")
     df = df.sort_values(["position", SCORE_COL], ascending=[True, False]).reset_index(drop=True)
     return df
 
@@ -44,8 +39,9 @@ def recommend_one(pos: str, pools, preds_idx):
     row = preds_idx.loc[pid]
     return {
         "player_id": pid,
-        "player_name": row.get("player_name", ""),
+        "player_name": row.get("player_display_name", "Unknown"),
         "position": row["position"],
+        "college_flag": int(row["college_flag"]),
         "pred": float(row[SCORE_COL]),
     }
 
@@ -59,35 +55,36 @@ def remove_from_pool(pos: str, player_id: str, pools) -> bool:
 def get_top_n(pos: str, pools, preds_idx, n=10) -> pd.DataFrame:
     ids = pools.get(pos, [])[:n]
     if not ids:
-        return pd.DataFrame(columns=["rank", "player_id", "player_name", "pred_fp_ppr_2026"])
+        return pd.DataFrame(columns=["rank", "player_id", "player_display_name", "college_flag", SCORE_COL])
     rows = preds_idx.loc[ids].copy()
     if isinstance(rows, pd.Series):
         rows = rows.to_frame().T
     out = rows.reset_index().rename(columns={"index": "player_id"})
-    out = out[["player_id", "player_name", SCORE_COL]].rename(columns={SCORE_COL: "pred_fp_ppr_2026"})
+    out = out[["player_id", "player_display_name", "college_flag", SCORE_COL]]
     out.insert(0, "rank", range(1, len(out) + 1))
     return out
 
-# ---------- App ----------
-st.title("🏈 Draft Pick Assistant (Prototype)")
+# ── App ───────────────────────────────────────────────────────────────────────
+st.title("🏈 Fantasy Draft Assistant")
 
 preds = load_preds(PRED_PATH)
 preds_idx = preds.set_index("player_id")
 
-# session state init
+# Session state init
 if "pools" not in st.session_state or "picked" not in st.session_state:
     st.session_state.pools, st.session_state.picked = build_pools(preds)
 
-# top bar controls
+# Top bar controls
 col1, col2 = st.columns([2, 1])
 with col1:
     pos = st.selectbox("Choose a position", VALID_POS, index=1)
 with col2:
     if st.button("Reset draft"):
         st.session_state.pools, st.session_state.picked = build_pools(preds)
+        st.session_state["deny_mode"] = False
         st.success("Draft reset.")
 
-# status
+# Remaining counts
 remaining = {p: len(st.session_state.pools.get(p, [])) for p in VALID_POS}
 st.caption("Remaining: " + " | ".join([f"{p}: {remaining[p]}" for p in VALID_POS]))
 
@@ -97,26 +94,29 @@ if rec is None:
     st.warning(f"No players left in pool for {pos}.")
     st.stop()
 
-st.subheader(f"Recommendation: {rec['player_name'] or '(name unavailable)'}")
-st.write(f"**Predicted PPR:** {rec['pred']:.2f}")
-st.code(f"player_id: {rec['player_id']}")
+# Recommendation card
+st.subheader(f"⭐ Recommended: {rec['player_name']}")
+col_a, col_b, col_c = st.columns(3)
+col_a.metric("Predicted Weekly PPR", f"{rec['pred']:.2f}")
+col_b.metric("Position", rec["position"])
+col_c.metric("Player Type", "🎓 College" if rec["college_flag"] == 1 else "🏈 NFL")
+st.caption(f"player_id: {rec['player_id']}")
 
-# accept / deny controls
+# Accept / Deny controls
 c1, c2 = st.columns(2)
 with c1:
     if st.button("✅ Accept pick"):
         remove_from_pool(pos, rec["player_id"], st.session_state.pools)
         st.session_state.picked[pos].append(rec["player_id"])
-        st.success("Pick accepted and removed from pool. Get next recommendation above.")
+        st.session_state["deny_mode"] = False
+        st.success(f"Picked {rec['player_name']}!")
         st.rerun()
 
 with c2:
-    deny = st.button("❌ Deny recommendation")
+    if st.button("❌ Deny recommendation"):
+        st.session_state["deny_mode"] = True
 
-if deny:
-    st.session_state["deny_mode"] = True
-
-# deny flow
+# Deny flow
 if st.session_state.get("deny_mode", False):
     st.markdown("### Why deny?")
     reason = st.radio(
@@ -130,11 +130,11 @@ if st.session_state.get("deny_mode", False):
             remove_from_pool(pos, rec["player_id"], st.session_state.pools)
             st.session_state.picked[pos].append(rec["player_id"])
             st.session_state["deny_mode"] = False
-            st.success("Removed from pool. Showing next recommendation.")
+            st.success(f"Removed {rec['player_name']} from pool.")
             st.rerun()
 
     else:
-        st.info("Player stays in the pool. Here are the next 10 suggestions.")
+        st.info("Player stays in pool. Here are the next 10 suggestions.")
         top10 = get_top_n(pos, st.session_state.pools, preds_idx, n=10)
         st.dataframe(top10, use_container_width=True, hide_index=True)
 
@@ -149,13 +149,27 @@ if st.session_state.get("deny_mode", False):
                 remove_from_pool(pos, chosen, st.session_state.pools)
                 st.session_state.picked[pos].append(chosen)
                 st.session_state["deny_mode"] = False
-                st.success("Chosen player accepted and removed from pool.")
+                name = preds_idx.loc[chosen, "player_display_name"] if chosen in preds_idx.index else chosen
+                st.success(f"Picked {name}!")
                 st.rerun()
 
         if st.button("Back"):
             st.session_state["deny_mode"] = False
             st.rerun()
 
-# optional: show picked list
-with st.expander("Show picked players (IDs)"):
-    st.json(st.session_state.picked)
+# Picked players expander
+with st.expander("📋 Show my draft picks"):
+    any_picked = False
+    for p in VALID_POS:
+        picked_ids = st.session_state.picked[p]
+        if picked_ids:
+            any_picked = True
+            st.markdown(f"**{p}**")
+            picked_rows = preds_idx.loc[
+                [pid for pid in picked_ids if pid in preds_idx.index],
+                ["player_display_name", SCORE_COL]
+            ].reset_index()
+            picked_rows.columns = ["player_id", "player_display_name", "pred_fp_ppr_2026"]
+            st.dataframe(picked_rows, use_container_width=True, hide_index=True)
+    if not any_picked:
+        st.info("No picks made yet.")
