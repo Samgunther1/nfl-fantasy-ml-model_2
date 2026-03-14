@@ -335,8 +335,7 @@ wr_model <- wr_joined %>% filter(!is.na(avg_weekly_ppr))
 te_model <- te_joined %>% filter(!is.na(avg_weekly_ppr))
 
 # Predict set: 2025 draft class players with no NFL history yet
-# These will be scored by the CFB model to generate cfb_projected_ppr,
-# then included in the NFL model's 2026 prediction files
+
 qb_predict <- qb_joined %>% filter(is.na(avg_weekly_ppr), season == max(season, na.rm = TRUE))
 rb_predict <- rb_joined %>% filter(is.na(avg_weekly_ppr), season == max(season, na.rm = TRUE))
 wr_predict <- wr_joined %>% filter(is.na(avg_weekly_ppr), season == max(season, na.rm = TRUE))

@@ -50,6 +50,7 @@ cfb_clean <- cfb %>%
   mutate(college_flag = 1) %>%
   select(
     player_id       = nfl_player_id,
+    player_display_name     = nfl_name,
     season          = nfl_rookie_season,
     games,
     overall, round, pick, height, weight,
@@ -74,7 +75,7 @@ cfb_clean <- cfb %>%
 nfl_clean <- nfl_with_draft %>%
   mutate(college_flag = 0) %>%
   select(
-    player_id, season, games,
+    player_id, player_display_name,season, games,
     overall, round, pick, height, weight,
     pre_draft_ranking, pre_draft_position_ranking, pre_draft_grade,
     completions_pg, attempts_pg, passing_yards_pg, passing_tds_pg,

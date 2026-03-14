@@ -62,7 +62,7 @@ qb_stat_cols <- c(
 
 qb_season_features <- nfl_qb_weekly %>%
   filter(season >= 2011, season <= 2024) %>%
-  group_by(player_id, season) %>%
+  group_by(player_id, season,player_display_name) %>%
   summarise(
     games = n_distinct(week),
     across(
@@ -161,7 +161,7 @@ skill_stat_cols <- c(
 build_season_features <- function(weekly_df, stat_cols) {
   weekly_df %>%
     filter(season >= 2011, season <= 2024) %>%
-    group_by(player_id, season) %>%
+    group_by(player_id, season,player_display_name) %>%
     summarise(
       games = n_distinct(week),
       across(
@@ -187,7 +187,7 @@ bind_rows(
 build_targets <- function(weekly_df) {
   weekly_df %>%
     filter(season >= 2012, season <= 2025) %>%
-    group_by(player_id, season) %>%
+    group_by(player_id, season, player_display_name) %>%
     summarise(
       target_fp_ppr = mean(fantasy_points_ppr, na.rm = TRUE),
       target_games = n_distinct(week),
@@ -230,7 +230,7 @@ bind_rows(
 build_predict_features_one_season <- function(weekly_df, stat_cols, season_value = 2025L) {
   weekly_df %>%
     filter(season == season_value) %>%
-    group_by(player_id, season) %>%
+    group_by(player_id, season,player_display_name) %>%
     summarise(
       games = n_distinct(week),
       across(
