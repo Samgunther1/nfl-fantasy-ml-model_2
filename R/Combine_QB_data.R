@@ -1,0 +1,124 @@
+library(tidyverse)
+
+cfb <- read_csv("data/processed/cfb_to_nfl_qb_modeling.csv")
+nfl <- read_csv("data/processed/nfl_to_nfl_qb_train.csv")
+
+# Inspect structure
+glimpse(cfb)
+glimpse(nfl)
+
+# See all column names side by side
+cat("\n--- CFB Columns ---\n")
+print(colnames(cfb))
+
+cat("\n--- NFL Columns ---\n")
+print(colnames(nfl))
+
+# Build draft info lookup from CFB (one row per nfl_player_id)
+draft_lookup <- cfb %>%
+  select(nfl_player_id, overall, round, pick, height, weight, 
+         pre_draft_ranking, pre_draft_position_ranking, pre_draft_grade) %>%
+  distinct(nfl_player_id, .keep_all = TRUE)
+
+# Join draft info onto NFL table
+nfl_with_draft <- nfl %>%
+  left_join(draft_lookup, by = c("player_id" = "nfl_player_id"))
+
+# Check how well the join worked
+cat("NFL rows total:", nrow(nfl_with_draft), "\n")
+cat("Rows with draft info successfully joined:", sum(!is.na(nfl_with_draft$overall)), "\n")
+cat("Rows missing draft info:", sum(is.na(nfl_with_draft$overall)), "\n")
+
+# Look at the NFL rows missing draft info
+missing_draft <- nfl_with_draft %>%
+  filter(is.na(overall))
+
+# How many unique players are missing?
+cat("Unique players missing draft info:", n_distinct(missing_draft$player_id), "\n")
+
+# What seasons are they from?
+cat("\nSeason distribution of missing rows:\n")
+print(table(missing_draft$season))
+
+# Compare to players who DID match
+matched <- nfl_with_draft %>% filter(!is.na(overall))
+cat("\nSeason distribution of matched rows:\n")
+print(table(matched$season))
+
+# Standardize CFB columns to shared naming convention
+cfb_clean <- cfb %>%
+  mutate(college_flag = 1) %>%
+  select(
+    player_id       = nfl_player_id,
+    season          = nfl_rookie_season,
+    games,
+    overall, round, pick, height, weight,
+    pre_draft_ranking, pre_draft_position_ranking, pre_draft_grade,
+    completions_pg        = passing_completions_pg,
+    attempts_pg           = passing_attempts_pg,
+    passing_yards_pg      = passing_yds_pg,
+    passing_tds_pg        = passing_td_pg,
+    passing_interceptions_pg = passing_int_pg,
+    carries_pg            = rushing_car_pg,
+    rushing_yards_pg      = rushing_yds_pg,
+    rushing_tds_pg        = rushing_td_pg,
+    fumble_recovery_own_pg = fumbles_rec_pg,
+    rushing_fumbles_lost_pg = fumbles_lost_pg,
+    rushing_fumbles_pg    = fumbles_fum_pg,
+    target_fp_ppr         = avg_weekly_ppr,
+    target_games          = n_weeks,
+    college_flag
+  )
+
+# Standardize NFL columns to shared naming convention
+nfl_clean <- nfl_with_draft %>%
+  mutate(college_flag = 0) %>%
+  select(
+    player_id, season, games,
+    overall, round, pick, height, weight,
+    pre_draft_ranking, pre_draft_position_ranking, pre_draft_grade,
+    completions_pg, attempts_pg, passing_yards_pg, passing_tds_pg,
+    passing_interceptions_pg, carries_pg, rushing_yards_pg, rushing_tds_pg,
+    fumble_recovery_own_pg, rushing_fumbles_lost_pg, rushing_fumbles_pg,
+    target_fp_ppr, target_games,
+    college_flag
+  )
+
+# Union the two
+combined <- bind_rows(cfb_clean, nfl_clean)
+
+# Sanity check
+cat("CFB rows:", nrow(cfb_clean), "\n")
+cat("NFL rows:", nrow(nfl_clean), "\n")
+cat("Combined rows:", nrow(combined), "\n")
+cat("Combined columns:", ncol(combined), "\n")
+glimpse(combined)
+
+na_summary <- combined %>%
+  summarise(across(everything(), ~ round(mean(is.na(.)) * 100, 1))) %>%
+  pivot_longer(everything(), names_to = "column", values_to = "pct_missing") %>%
+  arrange(desc(pct_missing))
+
+print(na_summary, n = 25)
+
+combined_clean <- combined %>%
+  mutate(across(c(fumble_recovery_own_pg, 
+                  rushing_fumbles_lost_pg, 
+                  rushing_fumbles_pg,
+                  carries_pg,
+                  rushing_yards_pg,
+                  rushing_tds_pg), 
+                ~ replace_na(., 0)))
+
+# Verify those columns are now clean
+combined_clean %>%
+  summarise(across(c(fumble_recovery_own_pg, rushing_fumbles_lost_pg, 
+                     rushing_fumbles_pg, carries_pg, 
+                     rushing_yards_pg, rushing_tds_pg), 
+                   ~ sum(is.na(.)))) %>%
+  print()
+
+write_csv(combined_clean, "data/processed/qb_combined_training.csv")
+
+cat("Export complete\n")
+cat("Final dimensions:", nrow(combined_clean), "rows x", ncol(combined_clean), "columns\n")
