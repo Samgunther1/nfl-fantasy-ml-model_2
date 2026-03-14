@@ -93,6 +93,35 @@ combined_clean %>%
                    ~ sum(is.na(.)))) %>%
   print()
 
+# ── Backfill missing draft info via name match ────────────────────────────────
+
+# Build name-based draft lookup (one row per name, most recent draft year)
+draft_name_lookup <- read_csv("data/raw/cfb_draft_data.csv") %>%
+  arrange(desc(season)) %>%
+  distinct(name, .keep_all = TRUE) %>%
+  select(name, overall, round, pick, height, weight,
+         pre_draft_ranking, pre_draft_position_ranking, pre_draft_grade)
+
+# Join and coalesce
+combined_clean <- combined_clean %>%
+  left_join(draft_name_lookup, by = c("player_display_name" = "name"), suffix = c("", "_nm")) %>%
+  mutate(
+    overall                    = coalesce(overall, overall_nm),
+    round                      = coalesce(round, round_nm),
+    pick                       = coalesce(pick, pick_nm),
+    height                     = coalesce(height, height_nm),
+    weight                     = coalesce(weight, weight_nm),
+    pre_draft_ranking          = coalesce(pre_draft_ranking, pre_draft_ranking_nm),
+    pre_draft_position_ranking = coalesce(pre_draft_position_ranking, pre_draft_position_ranking_nm),
+    pre_draft_grade            = coalesce(pre_draft_grade, pre_draft_grade_nm)
+  ) %>%
+  select(-ends_with("_nm"))
+
+# Check improvement
+cat("Rows with draft info after name backfill:", sum(!is.na(combined_clean$overall)), "\n")
+cat("Rows still missing draft info:", sum(is.na(combined_clean$overall)), "\n")
+
+
 # ── 9. Export ─────────────────────────────────────────────────────────────────
 write_csv(combined_clean, "data/processed/wr_combined_training.csv")
 cat("Export complete\n")

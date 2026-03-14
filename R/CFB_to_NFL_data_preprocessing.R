@@ -5,15 +5,15 @@ library(stringr)
 
 
 # Clean cfb data
-cfb_stats <- read.csv('data/raw/cfb_player_stats_2010_2025.csv')
-nfl_stats <- read.csv('data/raw/nfl_player_stats_2011_2025.csv')
+cfb_stats <- read.csv('data/raw/cfb_player_stats.csv')
+nfl_stats <- read.csv('data/raw/nfl_player_stats.csv')
 
 
 #Split data by position
-cfb_qb_df  <- cfb_stats %>% filter(position.x == "QB")
-cfb_rb_df  <- cfb_stats %>% filter(position.x == "RB")
-cfb_wr_df  <- cfb_stats %>% filter(position.x == "WR")
-cfb_te_df  <- cfb_stats %>% filter(position.x == "TE")
+cfb_qb_df  <- cfb_stats %>% filter(position == "QB")
+cfb_rb_df  <- cfb_stats %>% filter(position == "RB")
+cfb_wr_df  <- cfb_stats %>% filter(position == "WR")
+cfb_te_df  <- cfb_stats %>% filter(position == "TE")
 
 #create player key
 make_name_key <- function(x) {
@@ -94,22 +94,22 @@ cfb_te_df <- cfb_te_df %>%
 #filter to max season
 qb_last <-cfb_qb_df %>%
   group_by(player_key) %>%
-  filter(season.x == max(season.x, na.rm = TRUE)) %>%
+  filter(season == max(season, na.rm = TRUE)) %>%
   ungroup()
 
 rb_last <-cfb_rb_df %>%
   group_by(player_key) %>%
-  filter(season.x == max(season.x, na.rm = TRUE)) %>%
+  filter(season == max(season, na.rm = TRUE)) %>%
   ungroup()
 
 wr_last <-cfb_wr_df %>%
   group_by(player_key) %>%
-  filter(season.x == max(season.x, na.rm = TRUE)) %>%
+  filter(season == max(season, na.rm = TRUE)) %>%
   ungroup()
 
 te_last <-cfb_te_df %>%
   group_by(player_key) %>%
-  filter(season.x == max(season.x, na.rm = TRUE)) %>%
+  filter(season == max(season, na.rm = TRUE)) %>%
   ungroup()
 
 #aggregate stats
@@ -119,8 +119,8 @@ qb_season <- qb_last %>%
   group_by(player_key) %>%
   summarise(
     athlete_name = first(athlete_name),
-    season = max(season.x, na.rm = TRUE),
-    position = first(position.x),
+    season = max(season, na.rm = TRUE),
+    position = first(position),
     games = n_distinct(week),
     
     # 🔹 KEEP DRAFT / MEASUREMENTS FIELDS
@@ -171,8 +171,8 @@ skill_season_totals <- function(df) {
     group_by(player_key) %>%
     summarise(
       athlete_name = first(athlete_name),
-      season = max(season.x, na.rm = TRUE),
-      position = first(position.x),
+      season = max(season, na.rm = TRUE),
+      position = first(position),
       games = n_distinct(week),
       
       # 🔹 KEEP DRAFT / MEASUREMENTS FIELDS
@@ -299,6 +299,10 @@ nfl_wr_weekly_avg <- nfl_wr_weekly_avg %>%
   filter(n == 1) %>%
   select(-n)
 nfl_te_weekly_avg <- nfl_te_weekly_avg %>%
+  add_count(player_key) %>%
+  filter(n == 1) %>%
+  select(-n)
+nfl_rb_weekly_avg <- nfl_rb_weekly_avg %>%
   add_count(player_key) %>%
   filter(n == 1) %>%
   select(-n)

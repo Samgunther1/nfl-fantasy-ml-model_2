@@ -1,4 +1,4 @@
-nfl_stats <- read.csv('data/raw/nfl_player_stats_2011_2025.csv')
+nfl_stats <- read.csv('data/raw/nfl_player_stats.csv')
 
 library(dplyr)
 
@@ -61,7 +61,7 @@ qb_stat_cols <- c(
 )
 
 qb_season_features <- nfl_qb_weekly %>%
-  filter(season >= 2011, season <= 2024) %>%
+  filter(season >= 2004, season <= 2024) %>%
   group_by(player_id, season,player_display_name) %>%
   summarise(
     games = n_distinct(week),
@@ -78,9 +78,9 @@ qb_season_features %>%
   summarise(min_season = min(season), max_season = max(season), rows = n())
 
 
-# 1) Target table: season-level avg weekly fantasy points (targets exist 2012–2025)
+# 1) Target table: season-level avg weekly fantasy points (targets exist 2005–2025)
 qb_targets_next <- nfl_qb_weekly %>%
-  filter(season >= 2012, season <= 2025) %>%
+  filter(season >= 2005, season <= 2025) %>%
   group_by(player_id, season) %>%
   summarise(
     target_fp_ppr = mean(fantasy_points_ppr, na.rm = TRUE),
@@ -160,7 +160,7 @@ skill_stat_cols <- c(
 
 build_season_features <- function(weekly_df, stat_cols) {
   weekly_df %>%
-    filter(season >= 2011, season <= 2024) %>%
+    filter(season >= 2004, season <= 2024) %>%
     group_by(player_id, season, player_display_name) %>%
     summarise(
       games = n_distinct(week),
@@ -186,7 +186,7 @@ bind_rows(
 
 build_targets <- function(weekly_df) {
   weekly_df %>%
-    filter(season >= 2012, season <= 2025) %>%
+    filter(season >= 2005, season <= 2025) %>%
     group_by(player_id, season) %>%
     summarise(
       target_fp_ppr = mean(fantasy_points_ppr, na.rm = TRUE),

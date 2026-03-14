@@ -3,7 +3,6 @@ library(tidyverse)
 # ── 1. Load raw prediction sets ───────────────────────────────────────────────
 cfb_pred <- read_csv("data/processed/cfb_to_nfl_qb_predict_2026.csv")
 nfl_pred <- read_csv("data/processed/nfl_to_nfl_qb_predict_2026.csv")
-
 cat("CFB rows:", nrow(cfb_pred), "\n")
 cat("NFL rows:", nrow(nfl_pred), "\n")
 
@@ -12,7 +11,7 @@ cfb_pred_clean <- cfb_pred %>%
   mutate(college_flag = 1) %>%
   select(
     player_id                = nfl_player_id,
-    player_display_name              = athlete_name,
+    player_display_name      = athlete_name,
     overall, round, pick, height, weight,
     pre_draft_ranking, pre_draft_position_ranking, pre_draft_grade,
     completions_pg           = passing_completions_pg,
@@ -37,7 +36,7 @@ draft_lookup_pred <- training_data %>%
   distinct(player_id, .keep_all = TRUE)
 
 nfl_pred_clean <- nfl_pred %>%
-  mutate(college_flag = 0, player_name = NA_character_) %>%
+  mutate(college_flag = 0) %>%
   select(player_id, player_display_name, college_flag,
          completions_pg, attempts_pg, passing_yards_pg, passing_tds_pg,
          passing_interceptions_pg, carries_pg, rushing_yards_pg, rushing_tds_pg,
@@ -52,11 +51,33 @@ cat("Rows missing draft info:", sum(is.na(nfl_pred_clean$overall)), "\n")
 pred_combined <- bind_rows(cfb_pred_clean, nfl_pred_clean) %>%
   mutate(across(c(rushing_fumbles_lost_pg, rushing_fumbles_pg), ~ replace_na(., 0)))
 
-cat("CFB pred rows:", nrow(cfb_pred_clean), "\n")
-cat("NFL pred rows:", nrow(nfl_pred_clean), "\n")
+# ── 5. Backfill remaining missing draft info via name match ───────────────────
+draft_name_lookup <- read_csv("data/raw/cfb_draft_data.csv") %>%
+  filter(!is.na(overall)) %>%
+  arrange(desc(season)) %>%
+  distinct(name, .keep_all = TRUE) %>%
+  select(name, overall, round, pick, height, weight,
+         pre_draft_ranking, pre_draft_position_ranking, pre_draft_grade)
+
+pred_combined <- pred_combined %>%
+  left_join(draft_name_lookup, by = c("player_display_name" = "name"), suffix = c("", "_nm")) %>%
+  mutate(
+    overall                    = coalesce(overall, overall_nm),
+    round                      = coalesce(round, round_nm),
+    pick                       = coalesce(pick, pick_nm),
+    height                     = coalesce(height, height_nm),
+    weight                     = coalesce(weight, weight_nm),
+    pre_draft_ranking          = coalesce(pre_draft_ranking, pre_draft_ranking_nm),
+    pre_draft_position_ranking = coalesce(pre_draft_position_ranking, pre_draft_position_ranking_nm),
+    pre_draft_grade            = coalesce(pre_draft_grade, pre_draft_grade_nm)
+  ) %>%
+  select(-ends_with("_nm"))
+
 cat("Combined pred rows:", nrow(pred_combined), "\n")
 cat("Combined pred columns:", ncol(pred_combined), "\n")
+cat("Rows with draft info after backfill:", sum(!is.na(pred_combined$overall)), "\n")
+cat("Rows still missing draft info:", sum(is.na(pred_combined$overall)), "\n")
 
-# ── 5. Export ─────────────────────────────────────────────────────────────────
+# ── 6. Export ─────────────────────────────────────────────────────────────────
 write_csv(pred_combined, "data/processed/qb_pred_combined.csv")
 cat("Export complete\n")
