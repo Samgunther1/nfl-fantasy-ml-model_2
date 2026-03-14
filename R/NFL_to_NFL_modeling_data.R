@@ -161,7 +161,7 @@ skill_stat_cols <- c(
 build_season_features <- function(weekly_df, stat_cols) {
   weekly_df %>%
     filter(season >= 2011, season <= 2024) %>%
-    group_by(player_id, season,player_display_name) %>%
+    group_by(player_id, season, player_display_name) %>%
     summarise(
       games = n_distinct(week),
       across(
@@ -187,7 +187,7 @@ bind_rows(
 build_targets <- function(weekly_df) {
   weekly_df %>%
     filter(season >= 2012, season <= 2025) %>%
-    group_by(player_id, season, player_display_name) %>%
+    group_by(player_id, season) %>%
     summarise(
       target_fp_ppr = mean(fantasy_points_ppr, na.rm = TRUE),
       target_games = n_distinct(week),
@@ -224,6 +224,9 @@ bind_rows(
   te_train_df %>% summarise(pos="TE", rows=n(), feature_min=min(season), feature_max=max(season), target_min=min(target_season), target_max=max(target_season))
 )
 
+write.csv(rb_train_df, "data/processed/nfl_to_nfl_rb_train.csv", row.names = FALSE)
+write.csv(wr_train_df, "data/processed/nfl_to_nfl_wr_train.csv", row.names = FALSE)
+write.csv(te_train_df, "data/processed/nfl_to_nfl_te_train.csv", row.names = FALSE)
 
 
 # helper: build a single-season (2025) per-game feature table
