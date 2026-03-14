@@ -1,7 +1,11 @@
 import pandas as pd
 import streamlit as st
+from pathlib import Path
 
-PRED_PATH = "..data/processed/all_predictions_2026.csv"
+# Build path relative to this file's location
+BASE_DIR = Path(__file__).resolve().parent.parent
+PRED_PATH = BASE_DIR / "data" / "processed" / "all_predictions_2026.csv"
+
 SCORE_COL = "pred_fp_ppr_2026"
 VALID_POS = ["QB", "RB", "WR", "TE"]
 
