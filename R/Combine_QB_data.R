@@ -51,7 +51,7 @@ cfb_clean <- cfb %>%
   select(
     player_id       = nfl_player_id,
     player_display_name     = nfl_name,
-    season          = nfl_rookie_season,
+    season          = season,
     games,
     overall, round, pick, height, weight,
     pre_draft_ranking, pre_draft_position_ranking, pre_draft_grade,

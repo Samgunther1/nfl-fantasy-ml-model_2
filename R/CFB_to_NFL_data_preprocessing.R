@@ -91,7 +91,7 @@ cfb_te_df <- cfb_te_df %>%
     -team_points
   )
 
-#filter to max season
+#filter to max season in college
 qb_last <-cfb_qb_df %>%
   group_by(player_key) %>%
   filter(season == max(season, na.rm = TRUE)) %>%
