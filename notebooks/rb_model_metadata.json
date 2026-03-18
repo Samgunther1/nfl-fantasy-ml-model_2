@@ -1,1 +1,22 @@
-{"model_name": "xgb", "rf_rmse": 3.7684628882471003, "xgb_rmse": 3.7682982079748264}
+{
+  "model_name": "xgb",
+  "rf_rmse": 3.8126,
+  "xgb_rmse": 3.7836,
+  "best_params": {
+    "max_depth": 3,
+    "learning_rate": 0.0690462494707707,
+    "subsample": 0.8696906823744905,
+    "colsample_bytree": 0.9761032226698443,
+    "min_child_weight": 14,
+    "reg_alpha": 0.2645940119869313,
+    "reg_lambda": 1.157009398912411
+  },
+  "n_features": 15,
+  "n_samples": 2447,
+  "college_pct": 0.122,
+  "rf_trials": 100,
+  "xgb_trials": 100,
+  "sklearn_version": "1.8.0",
+  "xgboost_version": "3.2.0",
+  "optuna_version": "4.8.0"
+}

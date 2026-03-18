@@ -1,17 +1,17 @@
 {
   "model_name": "rf",
-  "rf_rmse": 5.1381,
-  "xgb_rmse": 5.1753,
+  "rf_rmse": 4.5715,
+  "xgb_rmse": 4.5717,
   "best_params": {
-    "n_estimators": 850,
-    "max_depth": 14,
-    "max_features": 0.5927724013646595,
-    "min_samples_leaf": 19,
-    "min_samples_split": 9
+    "n_estimators": 450,
+    "max_depth": 24,
+    "max_features": 0.523896085296933,
+    "min_samples_leaf": 13,
+    "min_samples_split": 17
   },
   "n_features": 17,
-  "n_samples": 1121,
-  "college_pct": 0.149,
+  "n_samples": 883,
+  "college_pct": 0.114,
   "rf_trials": 100,
   "xgb_trials": 100,
   "sklearn_version": "1.8.0",
