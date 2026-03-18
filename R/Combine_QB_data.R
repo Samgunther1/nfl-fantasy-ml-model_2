@@ -90,7 +90,7 @@ nfl_clean <- nfl_with_draft %>%
 combined <- bind_rows(cfb_clean, nfl_clean)
 
 # Remove rows where player did not play significant amount of games in a season
-combined <- combined %>% filter(games >= 4)
+combined <- combined %>% filter(games >= 4 & target_games >= 4 )
 
 
 # Sanity check
