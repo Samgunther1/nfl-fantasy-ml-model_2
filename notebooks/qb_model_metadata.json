@@ -1,1 +1,20 @@
-{"model_name": "xgb", "rf_rmse": 5.106029544067203, "xgb_rmse": 5.093066347123502}
+{
+  "model_name": "rf",
+  "rf_rmse": 5.1381,
+  "xgb_rmse": 5.1753,
+  "best_params": {
+    "n_estimators": 850,
+    "max_depth": 14,
+    "max_features": 0.5927724013646595,
+    "min_samples_leaf": 19,
+    "min_samples_split": 9
+  },
+  "n_features": 17,
+  "n_samples": 1121,
+  "college_pct": 0.149,
+  "rf_trials": 100,
+  "xgb_trials": 100,
+  "sklearn_version": "1.8.0",
+  "xgboost_version": "3.2.0",
+  "optuna_version": "4.8.0"
+}
