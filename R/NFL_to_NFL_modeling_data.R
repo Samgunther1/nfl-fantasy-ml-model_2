@@ -1,6 +1,12 @@
-nfl_stats <- read.csv('data/raw/nfl_player_stats.csv')
 
 library(dplyr)
+
+nfl_stats <- read_csv('data/raw/nfl_player_stats.csv')
+
+nfl_stats <- nfl_stats %>% filter(season_type == 'REG')
+
+
+
 
 # Operation 1: create weekly position tables (QB/RB/WR/TE)
 nfl_weekly_pos <- nfl_stats %>%
