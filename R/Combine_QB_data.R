@@ -1,4 +1,5 @@
 library(tidyverse)
+library(dbplyr)
 
 cfb <- read_csv("data/processed/cfb_to_nfl_qb_modeling.csv")
 nfl <- read_csv("data/processed/nfl_to_nfl_qb_train.csv")
@@ -87,6 +88,10 @@ nfl_clean <- nfl_with_draft %>%
 
 # Union the two
 combined <- bind_rows(cfb_clean, nfl_clean)
+
+# Remove rows where player did not play significant amount of games in a season
+combined <- combined %>% filter(games >= 4)
+
 
 # Sanity check
 cat("CFB rows:", nrow(cfb_clean), "\n")

@@ -1,5 +1,5 @@
 library(tidyverse)
-
+library(dbplyr)
 # ── 1. Load raw training sets ─────────────────────────────────────────────────
 cfb <- read_csv("data/processed/cfb_to_nfl_te_modeling.csv")
 nfl <- read_csv("data/processed/nfl_to_nfl_te_train.csv")
@@ -61,6 +61,10 @@ nfl_clean <- nfl_with_draft %>%
 
 # ── 6. Union ──────────────────────────────────────────────────────────────────
 combined <- bind_rows(cfb_clean, nfl_clean)
+
+# Remove rows where player did not play significant amount of games in a season
+combined <- combined %>% filter(games >= 4)
+
 
 cat("CFB rows:", nrow(cfb_clean), "\n")
 cat("NFL rows:", nrow(nfl_clean), "\n")
