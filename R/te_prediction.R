@@ -56,7 +56,7 @@ pred_combined <- bind_rows(cfb_pred_clean, nfl_pred_clean) %>%
 
 # ── 5. Backfill remaining missing draft info via name match ───────────────────
 draft_name_lookup <- read_csv("data/raw/cfb_draft_data.csv") %>%
-  filter(!is.na(overall)) %>%
+  filter(!is.na(overall), position == 'Tight End') %>%
   arrange(desc(season)) %>%
   distinct(name, .keep_all = TRUE) %>%
   select(name, overall, round, pick, height, weight,

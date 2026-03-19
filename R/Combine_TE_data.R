@@ -101,6 +101,7 @@ combined_clean %>%
 
 # Build name-based draft lookup (one row per name, most recent draft year)
 draft_name_lookup <- read_csv("data/raw/cfb_draft_data.csv") %>%
+  filter(position == 'Tight End') %>% 
   arrange(desc(season)) %>%
   distinct(name, .keep_all = TRUE) %>%
   select(name, overall, round, pick, height, weight,
