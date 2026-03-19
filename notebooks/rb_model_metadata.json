@@ -1,15 +1,15 @@
 {
   "model_name": "xgb",
-  "rf_rmse": 3.8126,
-  "xgb_rmse": 3.7836,
+  "rf_rmse": 3.809,
+  "xgb_rmse": 3.8073,
   "best_params": {
-    "max_depth": 3,
-    "learning_rate": 0.0690462494707707,
-    "subsample": 0.8696906823744905,
-    "colsample_bytree": 0.9761032226698443,
-    "min_child_weight": 14,
-    "reg_alpha": 0.2645940119869313,
-    "reg_lambda": 1.157009398912411
+    "max_depth": 7,
+    "learning_rate": 0.014603075712255303,
+    "subsample": 0.6419455034559165,
+    "colsample_bytree": 0.6612848713951893,
+    "min_child_weight": 29,
+    "reg_alpha": 0.004767490597010623,
+    "reg_lambda": 0.6858260038556695
   },
   "n_features": 15,
   "n_samples": 2447,
